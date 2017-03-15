@@ -1,16 +1,29 @@
+// Foursquare API keys
+var CLIENT_ID = "ECAQTFZ5BBRCA2SUHXOG1CJDRF442M5N3MKZGC5KAI5GZYPW";
+var CLIENT_SECRET = "4V25QGAAULY2DN2CH4KYQELGQ1PXXMNZBOZIQG0FKETPJL1B";
+
+// Google API key
+var KEY = "AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA";
+
+// viewModel variable
+var vm = new viewModel();
+
+var markers = [];
+
 /* ======= ViewModel ======= */
 function viewModel (){
   var self = this;
   self.city = ko.observable("Tokyo");
   self.broth = ko.observable("Tonkotsu");
-  self.locations = ko.observableArray();
+  self.locations = ko.observableArray([]);
   self.query = ko.computed(function() {
     return 'Ramen' + " " + self.broth().toString();
   });
 
   self.geocodeUrl = ko.computed(function() {
-    return "https://maps.googleapis.com/maps/api/geocode/json?key=AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA&"
+    return "https://maps.googleapis.com/maps/api/geocode/json?"
     + $.param({
+      'key': KEY,
       'address': self.city
     })
   });
@@ -18,8 +31,8 @@ function viewModel (){
   // Create Foursquare API to populate our data
   self.fsExploreUrl = ko.computed(function() {
     return "https://api.foursquare.com/v2/venues/explore?" + $.param({
-      'client_id': "ECAQTFZ5BBRCA2SUHXOG1CJDRF442M5N3MKZGC5KAI5GZYPW",
-      'client_secret': "4V25QGAAULY2DN2CH4KYQELGQ1PXXMNZBOZIQG0FKETPJL1B",
+      'client_id': CLIENT_ID,
+      'client_secret': CLIENT_SECRET,
       'v': getTodaysDate(),
       'limit': 10,
       'near': self.city,
@@ -28,10 +41,27 @@ function viewModel (){
   });
 
   populateData(self.fsExploreUrl(), self.locations);
+  console.log(self.locations());
+  console.log(self.locations.length);
+  console.log(self.locations().length);
+  console.log(self.locations()[0]);
+  console.log(self.locations[0]);
+// console.log(self.locations[0].location.labeledLatLngs);
+  for (i = 0; i < self.locations.length ; i++) {
+    console.log("i");
+    var marker = new google.maps.Marker({
+      // position: {self.locations()[i].location.lat, self.locations()[i].location.lng}
+      map: map,
+      animation: google.maps.Animation.DROP,
+    });
+    var infowindow = new google.maps.InfoWindow({
+      content: 'Do you ever feel like an InfoWindow?'
+    });
+  }
+
   // reverseGeocoding(self.geocodeUrl());
 };
 
-vm = new viewModel();
 
 ko.applyBindings(vm);
 
@@ -41,7 +71,7 @@ function populateData(url, locations) {
   $.getJSON(url, function(data) {
     // console.log(data);
     for (i = 0 ; i < data.response.groups[0].items.length; i++) {
-      locations.push(data.response.groups[0].items[i]);
+      locations.push(data.response.groups[0].items[i].venue);
     }
   }).fail(function(){
     console.log('Foursquare API Could Not Be Loaded.');
@@ -106,10 +136,13 @@ function initMap() {
 }
 
 function toggleBounce(marker) {
-    console.log("here");
-    if (marker.getAnimation() !== null) {
+  console.log("here");
+  if (marker.getAnimation() !== null) {
+    marker.setAnimation(null);
+  } else {
+    marker.setAnimation(google.maps.Animation.BOUNCE);
+    setTimeout(function() {
       marker.setAnimation(null);
-    } else {
-      marker.setAnimation(google.maps.Animation.BOUNCE);
-    }
+    }, 1500);
+  }
 }

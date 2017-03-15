@@ -16,22 +16,23 @@
     <p>City: <span data-bind= "text: city"></span></p>
     <p>Broth: <span data-bind= "text: broth"></span></p>
     <p>fsExploreUrl: <span data-bind= "text: fsExploreUrl"></span></p>
-    <label for="city">City: </label>
-    <input id="city" name="city" data-bind="value: city">
-    <label for="city">Broth: </label>
-    <select id="broth" name="broth" data-bind="value: broth">
+    <label for="city-input">City: </label>
+    <input id="city-input" name="city" data-bind="value: city">
+    <label for="broth-input">Broth: </label>
+    <select id="broth-input" name="broth" data-bind="value: broth">
       <option>Tonkotsu</option>
       <option>Shio</option>
       <option>Shoyu</option>
       <option>Miso</option>
       <option>Seafood</option>
     </select>
+
   <h4>Locations</h4>
   <ul data-bind="foreach: locations">
-      <li>
-          Location <span data-bind="text: $index"> </span>:
-          <span data-bind="text: venue.name"> </span>
-      </li>
+    <li>
+      Location <span data-bind="text: $index"> </span>:
+      <span data-bind="text: name"> </span>
+    </li>
   </ul>
 
   <div id="map"></div>
