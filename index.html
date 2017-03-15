@@ -6,12 +6,16 @@
   <meta name="author" content="Kenneth Chen">
   <title>Ramen Finder</title>
   <link rel="stylesheet" href="css/main.css">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js'></script>
 </head>
 <body>
   <h3 id="header">Ramen Finder</h3>
 
     <p>City: <span data-bind= "text: city"></span></p>
     <p>Broth: <span data-bind= "text: broth"></span></p>
+    <p>fsExploreUrl: <span data-bind= "text: fsExploreUrl"></span></p>
     <label for="city">City: </label>
     <input id="city" name="city" data-bind="value: city">
     <label for="city">Broth: </label>
@@ -26,23 +30,21 @@
   <ul data-bind="foreach: locations">
       <li>
           Location <span data-bind="text: $index"> </span>:
-          <span data-bind="text: name"> </span>
+          <span data-bind="text: venue.name"> </span>
       </li>
   </ul>
 
-  <!--<div id="map"></div>-->
+  <div id="map"></div>
 
-  <!-- jQuery -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-  <!--Knockout Library-->
-  <script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js'></script>
+
+
   <!-- App Main Script -->
   <script src="js/app.js"></script>
-  <!--Google Map API-->
-  <!--
-  <script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA&v=3&callback=initMap"></script>-->
 
+  <!--Google Map API-->
+
+  <script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA&v=3&callback=initMap"></script>
 
 </body>
 </html>
