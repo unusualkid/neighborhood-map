@@ -10,6 +10,8 @@ var vm = new viewModel();
 
 var markers = [];
 
+var map;
+
 /* ======= ViewModel ======= */
 function viewModel (){
   var self = this;
@@ -41,11 +43,15 @@ function viewModel (){
   });
 
   populateData(self.fsExploreUrl(), self.locations);
-  console.log(self.locations());
-  console.log(self.locations.length);
-  console.log(self.locations().length);
-  console.log(self.locations()[0]);
-  console.log(self.locations[0]);
+  // console.log(self.locations());
+  // console.log(self.locations.length);
+  // console.log(self.locations().length);
+  // console.log(self.locations()[0]);
+  // console.log(self.locations[0]);
+  // self.printToConsole = ko.computed(function() {
+  //   console.log(self.locations());
+  // });
+
 // console.log(self.locations[0].location.labeledLatLngs);
   for (i = 0; i < self.locations.length ; i++) {
     console.log("i");
@@ -54,6 +60,7 @@ function viewModel (){
       map: map,
       animation: google.maps.Animation.DROP,
     });
+    markers.push(marker);
     var infowindow = new google.maps.InfoWindow({
       content: 'Do you ever feel like an InfoWindow?'
     });
@@ -72,6 +79,17 @@ function populateData(url, locations) {
     // console.log(data);
     for (i = 0 ; i < data.response.groups[0].items.length; i++) {
       locations.push(data.response.groups[0].items[i].venue);
+      // console.log("lat: " + locations()[locations().length-1].location.lat);
+      // console.log("lng: " + locations()[locations().length-1].location.lng);
+
+      var marker = new google.maps.Marker({
+        position: {lat: locations()[locations().length-1].location.lat,
+          lng: locations()[locations().length-1].location.lng},
+        // position: {lat: 35.689488, lng: 139.691706},
+        map: map,
+        animation: google.maps.Animation.DROP,
+    });
+    // markers.push(marker);
     }
   }).fail(function(){
     console.log('Foursquare API Could Not Be Loaded.');
@@ -99,8 +117,6 @@ function reverseGeocoding(url) {
     console.log('Geocode API Could Not Be Loaded.');
   });
 }
-
-var map;
 
 function initMap() {
   // Constructor creates a new map - only center and zoom are required.
