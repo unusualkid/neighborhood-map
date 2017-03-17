@@ -40,10 +40,6 @@ function viewModel (){
     })
   });
 
-  self.modifyMap = ko.computed(function() {
-    modifyMap(self.geocodeUrl());
-  });
-
   // Create Foursquare API to populate our data
   self.fsExploreUrl = ko.computed(function() {
     return "https://api.foursquare.com/v2/venues/explore?"
@@ -61,6 +57,10 @@ function viewModel (){
     initData(self.fsExploreUrl());
   })
 
+  self.modifyMap = ko.computed(function() {
+    modifyMap(self.geocodeUrl());
+  });
+
   // self.ConsoleLog1 = ko.computed(function() {
   //   console.log("geocodeUrl(): " + self.geocodeUrl());
   // });
@@ -76,27 +76,29 @@ function viewModel (){
     // self.ConsoleLog5 = ko.computed(function() {
     //   console.log("center(): " + self.center());
     // });
-};
+  };
 
 
-ko.applyBindings(vm);
+  ko.applyBindings(vm);
 
 
 // Populate data with Foursquare database
 function initData(url) {
   clearMarkers();
   locations = [];
+  var location = null;
 
   $.getJSON(url, function(data) {
     // For Google Map dynamic zoom later
     markerBounds = new google.maps.LatLngBounds()
 
     for (i = 0 ; i < data.response.groups[0].items.length; i++) {
-      locations.push(data.response.groups[0].items[i].venue);
-
+      location = data.response.groups[0].items[i].venue;
+      locations.push(location);
+      console.log(location);
       // Declare position for google.maps.Marker
-      var position = new google.maps.LatLng(locations[locations.length-1].location.lat,
-        locations[locations.length-1].location.lng);
+      var position = new google.maps.LatLng(location.location.lat,
+        location.location.lng);
 
       // Dynamic zoom to show all the markers
       markerBounds.extend(position);
@@ -109,8 +111,8 @@ function initData(url) {
     console.log("markers: "+ markers.length);
     console.log("locations: "+locations);
   }).fail(function(){
-      console.log('Foursquare API Could Not Be Loaded.');
-    });
+    console.log('Foursquare API Could Not Be Loaded.');
+  });
 
 }
 
@@ -120,16 +122,17 @@ function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
     center: center,
     zoom: 14,
-    mapTypeId: 'roadmap',
+    mapTypeId: 'terrain',
     streetViewControlOptions: {
       position: google.maps.ControlPosition.LEFT_TOP
     },
     mapTypeControlOptions: {
-      position: google.maps.ControlPosition.TOP_CENTER
+      position: google.maps.ControlPosition.TOP_RIGHT,
     },
     zoomControlOptions: {
       position: google.maps.ControlPosition.LEFT_TOP
     },
+    scaleControl: true
   });
 }
 
@@ -148,8 +151,10 @@ function getTodaysDate() {
 
 function modifyMap(url) {
   $.getJSON(url, function(data) {
-    center = new google.maps.LatLng(data.results[0].geometry.location.lat,
-      data.results[0].geometry.location.lng);
+    center = {
+      lat: data.results[0].geometry.location.lat,
+      lng: data.results[0].geometry.location.lng
+    };
 
       // Modify the Google Map center
       map.setCenter(center);
@@ -161,11 +166,43 @@ function modifyMap(url) {
 
 function addMarkerWithTimeout(position, timeout) {
   window.setTimeout(function() {
-    markers.push(new google.maps.Marker({
+    var marker = new google.maps.Marker({
       position: position,
       map: map,
       animation: google.maps.Animation.DROP
-    }));
+    });
+    console.log("location: "+ location);
+    var contentString ='<div id="content">'+
+    '<div id="siteNotice">'+
+    '</div>'+
+    '<h1 id="firstHeading" class="firstHeading">'+location.rating+
+    '</h1>'+
+    '<div id="bodyContent">'+
+    '<p><b>Uluru</b>, also referred to as <b>Ayers Rock</b>, is a large ' +
+    'sandstone rock formation in the southern part of the '+
+    'Northern Territory, central Australia. It lies 335&#160;km (208&#160;mi) '+
+    'south west of the nearest large town, Alice Springs; 450&#160;km '+
+    '(280&#160;mi) by road. Kata Tjuta and Uluru are the two major '+
+    'features of the Uluru - Kata Tjuta National Park. Uluru is '+
+    'sacred to the Pitjantjatjara and Yankunytjatjara, the '+
+    'Aboriginal people of the area. It has many springs, waterholes, '+
+    'rock caves and ancient paintings. Uluru is listed as a World '+
+    'Heritage Site.</p>'+
+    '<p>Attribution: Uluru, <a href="https://en.wikipedia.org/w/index.php?title=Uluru&oldid=297882194">'+
+    'https://en.wikipedia.org/w/index.php?title=Uluru</a> '+
+    '(last visited June 22, 2009).</p>'+
+    '</div>'+
+    '</div>';
+
+    var infowindow = new google.maps.InfoWindow({
+      content: contentString
+    });
+    marker.addListener('click', function(){
+      infowindow.open(map, marker);
+      toggleBounce(marker=marker);
+    })
+
+    markers.push(marker);
 
   }, timeout);
 }
@@ -179,3 +216,12 @@ function clearMarkers() {
   }
 }
 
+function toggleBounce(marker) {
+  console.log("here");
+  console.log("location: "+ location);
+  if (marker.getAnimation() !== null) {
+    marker.setAnimation(null);
+  } else {
+    marker.setAnimation(google.maps.Animation.BOUNCE);
+  }
+}
