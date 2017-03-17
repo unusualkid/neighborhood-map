@@ -6,9 +6,8 @@ var CLIENT_SECRET = "4V25QGAAULY2DN2CH4KYQELGQ1PXXMNZBOZIQG0FKETPJL1B";
 var KEY = "AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA";
 
 var vm = new viewModel();
-var markers = [];
-var marker,location;
-
+var markers = [], locs = [];
+var marker, loc;
 
 // Google Map variables
 var map;
@@ -18,15 +17,12 @@ var center = {
 };
 var markerBounds;
 
-/* ======= Model ======= */
-var locations = [];
-
 /* ======= ViewModel ======= */
 function viewModel (){
   var self = this;
   self.city = ko.observable("Tokyo");
   self.broth = ko.observable("Tonkotsu");
-  self.locations = ko.observableArray([]);
+  self.locs = ko.observableArray([]);
 
   // Foursquare API parameter
   self.query = ko.computed(function() {
@@ -67,7 +63,7 @@ function viewModel (){
   //   console.log("geocodeUrl(): " + self.geocodeUrl());
   // });
     // self.ConsoleLog2 = ko.computed(function() {
-    //   console.log("locations(): " + self.locations());
+    //   console.log("locs(): " + self.locs());
     // });
     // self.ConsoleLog3 = ko.computed(function() {
     //   console.log("center(): " + self.center());
@@ -87,31 +83,31 @@ function viewModel (){
 // Populate data with Foursquare database
 function initData(url) {
   clearMarkers();
-  locations = [];
-  location = null;
+  locs = [];
+  loc = null;
 
   $.getJSON(url, function(data) {
     // For Google Map dynamic zoom later
     markerBounds = new google.maps.LatLngBounds()
 
     for (i = 0 ; i < data.response.groups[0].items.length; i++) {
-      location = data.response.groups[0].items[i].venue;
-      locations.push(location);
-      console.log(location);
+      loc = data.response.groups[0].items[i].venue;
+      locs.push(loc);
+
       // Declare position for google.maps.Marker
-      var position = new google.maps.LatLng(location.location.lat,
-        location.location.lng);
+      var position = new google.maps.LatLng(loc.location.lat,
+        loc.location.lng);
 
       // Dynamic zoom to show all the markers
       markerBounds.extend(position);
       map.fitBounds(markerBounds);
+      console.log("loc: "+loc.name);
+      addInfoWindow();
 
       // Call function with a timeout so markers drop one after another
-      addMarkerWithTimeout(position, i * 200);
-
+      addMarkerWithTimeout(position, i * 100);
     }
-    console.log("markers: "+ markers.length);
-    console.log("locations: "+locations);
+
   }).fail(function(){
     console.log('Foursquare API Could Not Be Loaded.');
   });
@@ -166,6 +162,34 @@ function modifyMap(url) {
   });
 }
 
+function addInfoWindow() {
+  var contentString ='<div id="content">'+
+  '<div id="siteNotice">'+
+  '</div>'+
+  '<h1 id="firstHeading" class="firstHeading">'+loc.name+
+  '</h1>'+
+  '<div id="bodyContent">'+
+  '<p><b>Uluru</b>, also referred to as <b>Ayers Rock</b>, is a large ' +
+  'sandstone rock formation in the southern part of the '+
+  'Northern Territory, central Australia. It lies 335&#160;km (208&#160;mi) '+
+  'south west of the nearest large town, Alice Springs; 450&#160;km '+
+  '(280&#160;mi) by road. Kata Tjuta and Uluru are the two major '+
+  'features of the Uluru - Kata Tjuta National Park. Uluru is '+
+  'sacred to the Pitjantjatjara and Yankunytjatjara, the '+
+  'Aboriginal people of the area. It has many springs, waterholes, '+
+  'rock caves and ancient paintings. Uluru is listed as a World '+
+  'Heritage Site.</p>'+
+  '<p>Attribution: Uluru, <a href="https://en.wikipedia.org/w/index.php?title=Uluru&oldid=297882194">'+
+  'https://en.wikipedia.org/w/index.php?title=Uluru</a> '+
+  '(last visited June 22, 2009).</p>'+
+  '</div>'+
+  '</div>';
+
+  var infowindow = new google.maps.InfoWindow({
+    content: contentString
+  });
+}
+
 function addMarkerWithTimeout(position, timeout) {
   window.setTimeout(function() {
     marker = new google.maps.Marker({
@@ -173,39 +197,10 @@ function addMarkerWithTimeout(position, timeout) {
       map: map,
       animation: google.maps.Animation.DROP
     });
-    console.log("location: "+ location);
-    var contentString ='<div id="content">'+
-    '<div id="siteNotice">'+
-    '</div>'+
-    '<h1 id="firstHeading" class="firstHeading">'+location.rating+
-    '</h1>'+
-    '<div id="bodyContent">'+
-    '<p><b>Uluru</b>, also referred to as <b>Ayers Rock</b>, is a large ' +
-    'sandstone rock formation in the southern part of the '+
-    'Northern Territory, central Australia. It lies 335&#160;km (208&#160;mi) '+
-    'south west of the nearest large town, Alice Springs; 450&#160;km '+
-    '(280&#160;mi) by road. Kata Tjuta and Uluru are the two major '+
-    'features of the Uluru - Kata Tjuta National Park. Uluru is '+
-    'sacred to the Pitjantjatjara and Yankunytjatjara, the '+
-    'Aboriginal people of the area. It has many springs, waterholes, '+
-    'rock caves and ancient paintings. Uluru is listed as a World '+
-    'Heritage Site.</p>'+
-    '<p>Attribution: Uluru, <a href="https://en.wikipedia.org/w/index.php?title=Uluru&oldid=297882194">'+
-    'https://en.wikipedia.org/w/index.php?title=Uluru</a> '+
-    '(last visited June 22, 2009).</p>'+
-    '</div>'+
-    '</div>';
-
-    var infowindow = new google.maps.InfoWindow({
-      content: contentString
-    });
-    marker.addListener('click', function(){
-      infowindow.open(map, marker);
-      toggleBounce(marker=marker);
-    })
 
     markers.push(marker);
 
+    addListenerToMarker(marker);
   }, timeout);
 }
 
@@ -218,9 +213,19 @@ function clearMarkers() {
   }
 }
 
+function addListenerToMarker(marker) {
+        // console.log("marker: "+ marker.position);
+    marker.addListener('click', function(){
+      // infowindow.open(map, marker);
+      console.log("marker: "+ marker.position);
+      toggleBounce(marker);
+    });
+}
+
 function toggleBounce(marker) {
-  console.log("here");
-  console.log("location: "+ location);
+  // console.log("here");
+  console.log("location: "+ loc);
+  console.log("marker: "+ marker.position);
   if (marker.getAnimation() !== null) {
     marker.setAnimation(null);
   } else {
