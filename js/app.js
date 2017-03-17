@@ -5,19 +5,19 @@ var CLIENT_SECRET = "4V25QGAAULY2DN2CH4KYQELGQ1PXXMNZBOZIQG0FKETPJL1B";
 // Google API key
 var KEY = "AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA";
 
-// viewModel variable
 var vm = new viewModel();
-
 var markers = [];
 
+// Google Map variables
 var map;
-
-var firstLoad = true;
-
 var center = {
   lat: 35.689488,
   lng: 139.691706
 };
+var markerBounds;
+
+/* ======= Model ======= */
+var locations = [];
 
 /* ======= ViewModel ======= */
 function viewModel (){
@@ -25,10 +25,13 @@ function viewModel (){
   self.city = ko.observable("Tokyo");
   self.broth = ko.observable("Tonkotsu");
   self.locations = ko.observableArray([]);
+
+  // Foursquare API parameter
   self.query = ko.computed(function() {
     return 'Ramen' + " " + self.broth().toString();
   });
 
+  // Create the Google Map geocode API dynacically based on user's input of city
   self.geocodeUrl = ko.computed(function() {
     return "https://maps.googleapis.com/maps/api/geocode/json?"
     + $.param({
@@ -37,48 +40,42 @@ function viewModel (){
     })
   });
 
-  self.modifyCenter = ko.computed(function() {
-    modifyCenter(self.geocodeUrl());
+  self.modifyMap = ko.computed(function() {
+    modifyMap(self.geocodeUrl());
   });
-
-// console.log(self.center());
-
-  // console.log(self.center());
-  self.ConsoleLog1 = ko.computed(function() {
-    console.log("geocodeUrl(): " + self.geocodeUrl());
-  });
-  // self.ConsoleLog2 = ko.computed(function() {
-  //   console.log("locations(): " + self.locations());
-  // });
-  // self.ConsoleLog3 = ko.computed(function() {
-  //   console.log("center(): " + self.center());
-  // });
-  // self.ConsoleLog4 = ko.computed(function() {
-  //   console.log("city(): " + self.city());
-  // });
-  // self.ConsoleLog5 = ko.computed(function() {
-  //   console.log("center(): " + self.center());
-  // });
-
 
   // Create Foursquare API to populate our data
   self.fsExploreUrl = ko.computed(function() {
-    return "https://api.foursquare.com/v2/venues/explore?" + $.param({
+    return "https://api.foursquare.com/v2/venues/explore?"
+    + $.param({
       'client_id': CLIENT_ID,
       'client_secret': CLIENT_SECRET,
       'v': getTodaysDate(),
-      'limit': 5,
+      'limit': 10,
       'near': self.city,
       'query': self.query()
     });
-    console.log("self.fsExploreUrl");
   });
 
-  self.search = ko.computed(function() {
-    populateData(self.fsExploreUrl(), self.locations);
+  self.initData = ko.computed(function() {
+    initData(self.fsExploreUrl());
   })
 
-
+  // self.ConsoleLog1 = ko.computed(function() {
+  //   console.log("geocodeUrl(): " + self.geocodeUrl());
+  // });
+    // self.ConsoleLog2 = ko.computed(function() {
+    //   console.log("locations(): " + self.locations());
+    // });
+    // self.ConsoleLog3 = ko.computed(function() {
+    //   console.log("center(): " + self.center());
+    // });
+    // self.ConsoleLog4 = ko.computed(function() {
+    //   console.log("city(): " + self.city());
+    // });
+    // self.ConsoleLog5 = ko.computed(function() {
+    //   console.log("center(): " + self.center());
+    // });
 };
 
 
@@ -86,80 +83,43 @@ ko.applyBindings(vm);
 
 
 // Populate data with Foursquare database
-function populateData(url, locations) {
-  // console.log("populateData" + url);
-
+function initData(url) {
   clearMarkers();
-  // firstLoad = false;
+  locations = [];
+
   $.getJSON(url, function(data) {
-    // console.log(".getJSONFoursquare");
+    // For Google Map dynamic zoom later
+    markerBounds = new google.maps.LatLngBounds()
+
     for (i = 0 ; i < data.response.groups[0].items.length; i++) {
       locations.push(data.response.groups[0].items[i].venue);
 
-        // Declare position for google.maps.Marker
-        var position = {lat: locations()[locations().length-1].location.lat,
-          lng: locations()[locations().length-1].location.lng};
+      // Declare position for google.maps.Marker
+      var position = new google.maps.LatLng(locations[locations.length-1].location.lat,
+        locations[locations.length-1].location.lng);
 
-        // Call function with a timeout so markers drop one after another
-        addMarkerWithTimeout(position, i * 200);
-      }
-    }).fail(function(){
+      // Dynamic zoom to show all the markers
+      markerBounds.extend(position);
+      map.fitBounds(markerBounds);
+
+      // Call function with a timeout so markers drop one after another
+      addMarkerWithTimeout(position, i * 200);
+
+    }
+    console.log("markers: "+ markers.length);
+    console.log("locations: "+locations);
+  }).fail(function(){
       console.log('Foursquare API Could Not Be Loaded.');
     });
-  }
 
-// Return today's date in "YYYYMMDD" format for Foursquare API
-function getTodaysDate() {
-  var d = new Date();
-
-  var twoDigitMonth = (d.getMonth()+1).toString().length === 1 ?
-  "0" + (d.getMonth()+1).toString() : (d.getMonth()+1).toString();
-
-  var twoDigitDate = d.getDate().toString().length === 1 ?
-  "0" + d.getDate().toString() : d.getDate().toString();
-
-  return d.getFullYear().toString() + twoDigitMonth + twoDigitDate;
 }
 
-// function reverseGeocoding(url) {
-//   $.getJSON(url, function(data) {
-//     console.log(data.results[0].geometry.location);
-//     return data.results[0].geometry.location;
-//   }).fail(function(){
-//     console.log('Geocode API Could Not Be Loaded.');
-//   });
-// }
-
-function modifyCenter(url) {
-  $.getJSON(url, function(data) {
-      console.log(data.results[0].geometry.location);
-      center = {
-        lat: data.results[0].geometry.location.lat,
-        lng: data.results[0].geometry.location.lng
-      };
-      console.log(center);
-
-      // Modify the google map center
-      map.setCenter(center);
-    })
-  .fail(function(){
-    console.log('Geocode API Could Not Be Loaded.');
-  });
-}
-
-// function initMap(center) {
-//   map.center = {
-//     lat: 35.689488,
-//     lng: 139.691706
-//   }
-//   // initMap();
-// }
-
-
+// Initialize Google Map
 function initMap() {
+  markerBounds = new google.maps.LatLngBounds();
   map = new google.maps.Map(document.getElementById('map'), {
     center: center,
-    zoom: 12,
+    zoom: 14,
     mapTypeId: 'roadmap',
     streetViewControlOptions: {
       position: google.maps.ControlPosition.LEFT_TOP
@@ -173,6 +133,32 @@ function initMap() {
   });
 }
 
+// Return today's date in "YYYYMMDD" format
+function getTodaysDate() {
+  var d = new Date();
+
+  var twoDigitMonth = (d.getMonth()+1).toString().length === 1 ?
+  "0" + (d.getMonth()+1).toString() : (d.getMonth()+1).toString();
+
+  var twoDigitDate = d.getDate().toString().length === 1 ?
+  "0" + d.getDate().toString() : d.getDate().toString();
+
+  return d.getFullYear().toString() + twoDigitMonth + twoDigitDate;
+}
+
+function modifyMap(url) {
+  $.getJSON(url, function(data) {
+    center = new google.maps.LatLng(data.results[0].geometry.location.lat,
+      data.results[0].geometry.location.lng);
+
+      // Modify the Google Map center
+      map.setCenter(center);
+    })
+  .fail(function(){
+    console.log('Google Map API Could Not Be Loaded.');
+  });
+}
+
 function addMarkerWithTimeout(position, timeout) {
   window.setTimeout(function() {
     markers.push(new google.maps.Marker({
@@ -180,6 +166,7 @@ function addMarkerWithTimeout(position, timeout) {
       map: map,
       animation: google.maps.Animation.DROP
     }));
+
   }, timeout);
 }
 
@@ -192,13 +179,3 @@ function clearMarkers() {
   }
 }
 
-// function toggleBounce(marker) {
-//   if (marker.getAnimation() !== null) {
-//     marker.setAnimation(null);
-//   } else {
-//     marker.setAnimation(google.maps.Animation.BOUNCE);
-//     setTimeout(function() {
-//       marker.setAnimation(null);
-//     }, 1500);
-//   }
-// }
