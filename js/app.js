@@ -43,28 +43,6 @@ function viewModel (){
   });
 
   populateData(self.fsExploreUrl(), self.locations);
-  // console.log(self.locations());
-  // console.log(self.locations.length);
-  // console.log(self.locations().length);
-  // console.log(self.locations()[0]);
-  // console.log(self.locations[0]);
-  // self.printToConsole = ko.computed(function() {
-  //   console.log(self.locations());
-  // });
-
-// console.log(self.locations[0].location.labeledLatLngs);
-  for (i = 0; i < self.locations.length ; i++) {
-    console.log("i");
-    var marker = new google.maps.Marker({
-      // position: {self.locations()[i].location.lat, self.locations()[i].location.lng}
-      map: map,
-      animation: google.maps.Animation.DROP,
-    });
-    markers.push(marker);
-    var infowindow = new google.maps.InfoWindow({
-      content: 'Do you ever feel like an InfoWindow?'
-    });
-  }
 
   // reverseGeocoding(self.geocodeUrl());
 };
@@ -81,15 +59,16 @@ function populateData(url, locations) {
       locations.push(data.response.groups[0].items[i].venue);
       // console.log("lat: " + locations()[locations().length-1].location.lat);
       // console.log("lng: " + locations()[locations().length-1].location.lng);
-
-      var marker = new google.maps.Marker({
-        position: {lat: locations()[locations().length-1].location.lat,
-          lng: locations()[locations().length-1].location.lng},
-        // position: {lat: 35.689488, lng: 139.691706},
-        map: map,
-        animation: google.maps.Animation.DROP,
-    });
-    // markers.push(marker);
+      var position = {lat: locations()[locations().length-1].location.lat,
+        lng: locations()[locations().length-1].location.lng};
+      console.log(position);
+      addMarkerWithTimeout(position, i * 100);
+      // var marker = new google.maps.Marker({
+      //   position: {lat: locations()[locations().length-1].location.lat,
+      //     lng: locations()[locations().length-1].location.lng},
+      //     map: map,
+      //     animation: google.maps.Animation.DROP,
+      //   });
     }
   }).fail(function(){
     console.log('Foursquare API Could Not Be Loaded.');
@@ -120,11 +99,6 @@ function reverseGeocoding(url) {
 
 function initMap() {
   // Constructor creates a new map - only center and zoom are required.
-  // console.log(vm.city());
-  // console.log(vm.geocodeUrl());
-  // console.log(reverseGeocoding(vm.geocodeUrl()));
-  // var city = reverseGeocoding(vm.geocodeUrl());
-  // console.log(city);
   var city = {lat: 35.689488, lng: 139.691706};
 
   // Set map to the city inputted by user.
@@ -133,32 +107,39 @@ function initMap() {
     zoom: 12,
     mapTypeId: 'roadmap'
   });
-
-  var tribeca = {lat: 35.689488, lng: 139.691706};
-
-
-  var marker = new google.maps.Marker({
-    position: tribeca,
-    map: map,
-    animation: google.maps.Animation.DROP,
-  });
-  var infowindow = new google.maps.InfoWindow({
-    content: 'Do you ever feel like an InfoWindow?'
-  });
-  marker.addListener('click', function(){
-    infowindow.open(map, marker);
-    toggleBounce(marker=marker);
-  })
 }
 
-function toggleBounce(marker) {
-  console.log("here");
-  if (marker.getAnimation() !== null) {
-    marker.setAnimation(null);
-  } else {
-    marker.setAnimation(google.maps.Animation.BOUNCE);
-    setTimeout(function() {
-      marker.setAnimation(null);
-    }, 1500);
+function drop() {
+  clearMarkers();
+  for (var i = 0; i < neighborhoods.length; i++) {
+    addMarkerWithTimeout(neighborhoods[i], i * 200);
   }
 }
+
+function addMarkerWithTimeout(position, timeout) {
+  window.setTimeout(function() {
+    markers.push(new google.maps.Marker({
+      position: position,
+      map: map,
+      animation: google.maps.Animation.DROP
+    }));
+  }, timeout);
+}
+
+function clearMarkers() {
+  for (var i = 0; i < markers.length; i++) {
+    markers[i].setMap(null);
+  }
+  markers = [];
+}
+
+// function toggleBounce(marker) {
+//   if (marker.getAnimation() !== null) {
+//     marker.setAnimation(null);
+//   } else {
+//     marker.setAnimation(google.maps.Animation.BOUNCE);
+//     setTimeout(function() {
+//       marker.setAnimation(null);
+//     }, 1500);
+//   }
+// }
