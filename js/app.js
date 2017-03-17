@@ -7,6 +7,8 @@ var KEY = "AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA";
 
 var vm = new viewModel();
 var markers = [];
+var marker,location;
+
 
 // Google Map variables
 var map;
@@ -86,7 +88,7 @@ function viewModel (){
 function initData(url) {
   clearMarkers();
   locations = [];
-  var location = null;
+  location = null;
 
   $.getJSON(url, function(data) {
     // For Google Map dynamic zoom later
@@ -166,7 +168,7 @@ function modifyMap(url) {
 
 function addMarkerWithTimeout(position, timeout) {
   window.setTimeout(function() {
-    var marker = new google.maps.Marker({
+    marker = new google.maps.Marker({
       position: position,
       map: map,
       animation: google.maps.Animation.DROP
