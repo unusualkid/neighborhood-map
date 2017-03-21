@@ -6,8 +6,8 @@ var CLIENT_SECRET = "4V25QGAAULY2DN2CH4KYQELGQ1PXXMNZBOZIQG0FKETPJL1B";
 var KEY = "AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA";
 
 var vm = new viewModel();
-var markers = [], locs = [];
-var marker, loc;
+var markers = [], locs = [], infoWindows = [];
+var marker, loc, infoWindow;
 
 // Google Map variables
 var map;
@@ -16,6 +16,7 @@ var center = {
   lng: 139.691706
 };
 var markerBounds;
+
 
 /* ======= ViewModel ======= */
 function viewModel (){
@@ -59,40 +60,27 @@ function viewModel (){
     modifyMap(self.geocodeUrl());
   });
 
-  // self.ConsoleLog1 = ko.computed(function() {
-  //   console.log("geocodeUrl(): " + self.geocodeUrl());
-  // });
-    // self.ConsoleLog2 = ko.computed(function() {
-    //   console.log("locs(): " + self.locs());
-    // });
-    // self.ConsoleLog3 = ko.computed(function() {
-    //   console.log("center(): " + self.center());
-    // });
-    // self.ConsoleLog4 = ko.computed(function() {
-    //   console.log("city(): " + self.city());
-    // });
-    // self.ConsoleLog5 = ko.computed(function() {
-    //   console.log("center(): " + self.center());
-    // });
-  };
+};
 
-
-  ko.applyBindings(vm);
+ko.applyBindings(vm);
 
 
 // Populate data with Foursquare database
 function initData(url) {
-  clearMarkers();
-  locs = [];
+
+  clearMarkers(markers);
   loc = null;
+  infoWindow = null;
 
   $.getJSON(url, function(data) {
+
     // For Google Map dynamic zoom later
-    markerBounds = new google.maps.LatLngBounds()
+    markerBounds = new google.maps.LatLngBounds();
 
     for (i = 0 ; i < data.response.groups[0].items.length; i++) {
       loc = data.response.groups[0].items[i].venue;
       locs.push(loc);
+      // console.log(data.response.groups[0].items[i]);
 
       // Declare position for google.maps.Marker
       var position = new google.maps.LatLng(loc.location.lat,
@@ -101,18 +89,21 @@ function initData(url) {
       // Dynamic zoom to show all the markers
       markerBounds.extend(position);
       map.fitBounds(markerBounds);
-      console.log("loc: "+loc.name);
-      addInfoWindow();
 
-      // Call function with a timeout so markers drop one after another
-      addMarkerWithTimeout(position, i * 100);
+      addInfoWindowToLoc(loc);
+
     }
+    // addListenerToMarker();
+              console.log("I'm here!");
+          // Call function with a timeout so markers drop one after another
 
+      setMarkers(locs);
   }).fail(function(){
     console.log('Foursquare API Could Not Be Loaded.');
   });
 
 }
+
 
 // Initialize Google Map
 function initMap() {
@@ -132,7 +123,62 @@ function initMap() {
     },
     scaleControl: true
   });
+  // function placeMarker(lat,lng) {
+  //   // var latLng = new google.maps.LatLng( loc[1], loc[2]);
+  //   var marker = new google.maps.Marker({
+  //     position : position,
+  //     map      : map
+  //   });
+  //   google.maps.event.addListener(marker, 'click', function(){
+  //       infowindow.close(); // Close previously opened infowindow
+  //       infowindow.setContent( "<div id='infowindow'>"+ loc[0] +"</div>");
+  //       infowindow.open(map, marker);
+  //     });
+  //   for(var i=0; i<locs.length; i++) {
+  //     placeMarker(locs[i].location.lat,locs[i].location.lng);
+  //     console.log(locs[i].location.lat);
+  //   }
+  // }
 }
+function setMarkers(locs){
+  for(var i = 0; i < locs.length; i++){
+    // console.log("setMarkers for loop");
+    console.log("locs[i].name: "+locs[i].name);
+    console.log("locs[i].location.lat, locs[i].location.lat:"+locs[i].location.lat+" "+ locs[i].location.lat);
+    // var marker = locs[i];
+    var latLng = new google.maps.LatLng(locs[i].location.lat, locs[i].location.lng);
+    var content = locs[i].name;
+    var infowindow = new google.maps.InfoWindow();
+
+    marker = new google.maps.Marker({
+      position:latLng,
+      map: map,
+      animation: google.maps.Animation.DROP
+    });
+
+    console.log(marker);
+    google.maps.event.addListener(marker, 'click', function(content){
+      return function(){
+        infowindow.setContent(content);
+        infowindow.open(map, this);
+      }
+    }(content));
+  }
+}
+
+// function setMarkers(position, timeout) {
+//   window.setTimeout(function() {
+//     marker = new google.maps.Marker({
+//       position: position,
+//       map: map,
+//       animation: google.maps.Animation.DROP
+//     });
+//     console.log("addMarkerWithTimeout.marker: "+marker.position);
+//     // addListener(marker);
+//     // addListener();
+//     markers.push(marker);
+//   }, timeout);
+// }
 
 // Return today's date in "YYYYMMDD" format
 function getTodaysDate() {
@@ -146,6 +192,7 @@ function getTodaysDate() {
 
   return d.getFullYear().toString() + twoDigitMonth + twoDigitDate;
 }
+
 
 function modifyMap(url) {
   $.getJSON(url, function(data) {
@@ -162,49 +209,34 @@ function modifyMap(url) {
   });
 }
 
-function addInfoWindow() {
+
+function addInfoWindowToLoc(loc) {
+  // console.log("addInfoWindowToLoc, loc: "+loc.name);
   var contentString ='<div id="content">'+
-  '<div id="siteNotice">'+
-  '</div>'+
-  '<h1 id="firstHeading" class="firstHeading">'+loc.name+
-  '</h1>'+
+  // '<img id="siteImg" src="'+ loc.photos[0] +'" style="float: right; margin: 15px 15px;">'+
+  '<h4 id="firstHeading" class="firstHeading">'+ loc.name + '</h4>'+
+  '<div id="rating">Rating: ' +
+  '<span id="rating-content" style="color: #'+loc.ratingColor + '">'+
+  loc.rating + '</span>' +
+  '</div>' +
   '<div id="bodyContent">'+
-  '<p><b>Uluru</b>, also referred to as <b>Ayers Rock</b>, is a large ' +
-  'sandstone rock formation in the southern part of the '+
-  'Northern Territory, central Australia. It lies 335&#160;km (208&#160;mi) '+
-  'south west of the nearest large town, Alice Springs; 450&#160;km '+
-  '(280&#160;mi) by road. Kata Tjuta and Uluru are the two major '+
-  'features of the Uluru - Kata Tjuta National Park. Uluru is '+
-  'sacred to the Pitjantjatjara and Yankunytjatjara, the '+
-  'Aboriginal people of the area. It has many springs, waterholes, '+
-  'rock caves and ancient paintings. Uluru is listed as a World '+
-  'Heritage Site.</p>'+
-  '<p>Attribution: Uluru, <a href="https://en.wikipedia.org/w/index.php?title=Uluru&oldid=297882194">'+
-  'https://en.wikipedia.org/w/index.php?title=Uluru</a> '+
-  '(last visited June 22, 2009).</p>'+
+  '<div id="address">Address: '+
+  '<span id="address-content">' +loc.location.formattedAddress + '</span>'+
+  '</div>'+
+  '<div id="phone">Phone: '+
+  '<span id="phone-content">' +loc.contact.formattedPhone + '</span>'+
+  '</div>'+
   '</div>'+
   '</div>';
 
-  var infowindow = new google.maps.InfoWindow({
+  infoWindow = new google.maps.InfoWindow({
     content: contentString
   });
+  infoWindows.push(infoWindow);
 }
 
-function addMarkerWithTimeout(position, timeout) {
-  window.setTimeout(function() {
-    marker = new google.maps.Marker({
-      position: position,
-      map: map,
-      animation: google.maps.Animation.DROP
-    });
 
-    markers.push(marker);
-
-    addListenerToMarker(marker);
-  }, timeout);
-}
-
-function clearMarkers() {
+function clearMarkers(markers) {
   if (markers) {
     for (var i = 0; i < markers.length; i++) {
       markers[i].setMap(null);
@@ -213,19 +245,36 @@ function clearMarkers() {
   }
 }
 
-function addListenerToMarker(marker) {
-        // console.log("marker: "+ marker.position);
-    marker.addListener('click', function(){
-      // infowindow.open(map, marker);
-      console.log("marker: "+ marker.position);
-      toggleBounce(marker);
+
+// function addListener(marker) {
+//   console.log("addListener.marker");
+//   console.log(marker.position);
+//   marker.addListener('click', function() {
+//     console.log('marker.addListener("click", function()');
+//     console.log(marker.position.lat());
+//     infoWindows.open(map, marker);
+//   })
+// }
+
+
+function addListenerToMarker() {
+  console.log("addListenerToMarker.markers.length: "+markers.length);
+  for(var i; i < markers.length ; i++){
+    console.log("markers[i]: "+ markers[i].position);
+    console.log("infoWindows[i]: "+infoWindows[i]);
+    markers[i].addListener('click', function(){
+      infoWindows[i].open(map, markers[i]);
+      console.log("addListenerToMarker marker: "+ markers[i].position);
+      toggleBounce(markers[i]);
     });
+  }
+
 }
 
+
 function toggleBounce(marker) {
-  // console.log("here");
-  console.log("location: "+ loc);
-  console.log("marker: "+ marker.position);
+  console.log("toggleBounce location: "+ loc.name);
+  console.log("toggleBounce marker: "+ marker.position);
   if (marker.getAnimation() !== null) {
     marker.setAnimation(null);
   } else {
