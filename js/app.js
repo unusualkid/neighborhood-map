@@ -93,10 +93,10 @@ function initData(url) {
 
     }
     // addListenerToMarker();
-              console.log("I'm here!");
-          // Call function with a timeout so markers drop one after another
-
-      setMarkers(locs);
+    // Call function with a timeout so markers drop one after another
+    for(i=0;i<locs.length;i++){
+      window.setTimeout(setMarkers(locs[i]),i*200);
+    }
   }).fail(function(){
     console.log('Foursquare API Could Not Be Loaded.');
   });
@@ -139,48 +139,76 @@ function initMap() {
   //   }
   // }
 }
-function setMarkers(locs){
-  for(var i = 0; i < locs.length; i++){
-    // console.log("setMarkers for loop");
-    console.log("locs[i].name: "+locs[i].name);
-    console.log("locs[i].location.lat, locs[i].location.lat:"+locs[i].venue.location.lat+" "+ locs[i].venue.location.lat);
-    // var marker = locs[i];
-    var latLng = new google.maps.LatLng(locs[i].venue.location.lat, locs[i].venue.location.lng);
-    var content = createContent(locs[i]);
-    var infowindow = new google.maps.InfoWindow();
-    // var infowindow = setInfowindow(locs[i]);
 
-    var marker = new google.maps.Marker({
-      position: latLng,
-      map: map,
-      animation: google.maps.Animation.DROP
-    });
+function setMarkers(loc){
+  console.log(loc);
+  var latLng = new google.maps.LatLng(loc.venue.location.lat, loc.venue.location.lng);
+  var content = createContent(loc);
+  var infowindow = new google.maps.InfoWindow();
+
+  var marker = new google.maps.Marker({
+    position: latLng,
+    map: map,
+    animation: google.maps.Animation.DROP
+  });
 
     // marker.addListener('click', function(){
     //     infowindow.open(map, marker);
     // });
+    console.log("marker.position");
+    console.log(marker.position);
 
     google.maps.event.addListener(marker, 'click', function(content){
       return function(){
+        console.log(marker.position);
+        toggleBounce(marker);
         infowindow.setContent(content);
         infowindow.open(map, this);
       }
     }(content));
-  }
-}
 
-// function setMarkers(position, timeout) {
-//   window.setTimeout(function() {
-//     marker = new google.maps.Marker({
-//       position: position,
+  }
+// function setMarkers(locs){
+//   for(var i = 0; i < locs.length; i++){
+//     var latLng = new google.maps.LatLng(locs[i].venue.location.lat, locs[i].venue.location.lng);
+//     var content = createContent(locs[i]);
+//     var infowindow = new google.maps.InfoWindow();
+
+//     var marker = new google.maps.Marker({
+//       position: latLng,
 //       map: map,
 //       animation: google.maps.Animation.DROP
 //     });
-//     console.log("addMarkerWithTimeout.marker: "+marker.position);
-//     // addListener(marker);
-//     // addListener();
-//     markers.push(marker);
-//   }, timeout);
+
+//     // marker.addListener('click', function(){
+//     //     infowindow.open(map, marker);
+//     // });
+//     console.log("marker.position");
+//     console.log(marker.position);
+
+//     google.maps.event.addListener(marker, 'click', function(content){
+//       return function(){
+//         console.log(marker.position);
+//         toggleBounce(marker);
+//         infowindow.setContent(content);
+//         infowindow.open(map, this);
+//       }
+//     }(content));
+//   }
+// }
+
+// function setMarkers(position, timeout) {
+  // window.setTimeout(function() {
+  //   marker = new google.maps.Marker({
+  //     position: position,
+  //     map: map,
+  //     animation: google.maps.Animation.DROP
+  //   });
+  //   console.log("addMarkerWithTimeout.marker: "+marker.position);
+  //   // addListener(marker);
+  //   // addListener();
+  //   markers.push(marker);
+  // }, timeout);
 // }
 
 // Return today's date in "YYYYMMDD" format
