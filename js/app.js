@@ -7,7 +7,7 @@ var KEY = "AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA";
 
 var vm = new viewModel();
 var markers = [], locs = [], infoWindows = [];
-var marker, loc, infoWindow;
+var  loc;
 
 // Google Map variables
 var map;
@@ -51,7 +51,7 @@ function viewModel (){
       'query': self.query()
     });
   });
-
+  console.log(self.fsExploreUrl());
   self.initData = ko.computed(function() {
     initData(self.fsExploreUrl());
   })
@@ -78,19 +78,18 @@ function initData(url) {
     markerBounds = new google.maps.LatLngBounds();
 
     for (i = 0 ; i < data.response.groups[0].items.length; i++) {
-      loc = data.response.groups[0].items[i].venue;
+      loc = data.response.groups[0].items[i];
       locs.push(loc);
       // console.log(data.response.groups[0].items[i]);
 
-      // Declare position for google.maps.Marker
-      var position = new google.maps.LatLng(loc.location.lat,
-        loc.location.lng);
+      // Declare latLng for Google Map boundary
+      var latLng = new google.maps.LatLng(loc.venue.location.lat, loc.venue.location.lng);
 
       // Dynamic zoom to show all the markers
-      markerBounds.extend(position);
+      markerBounds.extend(latLng);
       map.fitBounds(markerBounds);
 
-      addInfoWindowToLoc(loc);
+      // setInfowindow(loc);
 
     }
     // addListenerToMarker();
@@ -144,19 +143,23 @@ function setMarkers(locs){
   for(var i = 0; i < locs.length; i++){
     // console.log("setMarkers for loop");
     console.log("locs[i].name: "+locs[i].name);
-    console.log("locs[i].location.lat, locs[i].location.lat:"+locs[i].location.lat+" "+ locs[i].location.lat);
+    console.log("locs[i].location.lat, locs[i].location.lat:"+locs[i].venue.location.lat+" "+ locs[i].venue.location.lat);
     // var marker = locs[i];
-    var latLng = new google.maps.LatLng(locs[i].location.lat, locs[i].location.lng);
-    var content = locs[i].name;
+    var latLng = new google.maps.LatLng(locs[i].venue.location.lat, locs[i].venue.location.lng);
+    var content = createContent(locs[i]);
     var infowindow = new google.maps.InfoWindow();
+    // var infowindow = setInfowindow(locs[i]);
 
-    marker = new google.maps.Marker({
-      position:latLng,
+    var marker = new google.maps.Marker({
+      position: latLng,
       map: map,
       animation: google.maps.Animation.DROP
     });
 
-    console.log(marker);
+    // marker.addListener('click', function(){
+    //     infowindow.open(map, marker);
+    // });
+
     google.maps.event.addListener(marker, 'click', function(content){
       return function(){
         infowindow.setContent(content);
@@ -210,29 +213,26 @@ function modifyMap(url) {
 }
 
 
-function addInfoWindowToLoc(loc) {
-  // console.log("addInfoWindowToLoc, loc: "+loc.name);
+function createContent(loc) {
+
   var contentString ='<div id="content">'+
-  // '<img id="siteImg" src="'+ loc.photos[0] +'" style="float: right; margin: 15px 15px;">'+
-  '<h4 id="firstHeading" class="firstHeading">'+ loc.name + '</h4>'+
+  '<img id="site-img" class="img-thumbnail img-responsive pull-right" src="'+ loc.tips[0].photourl +'" alt="pic">'+
+  '<h4 id="first-heading" class="first-heading">'+ loc.venue.name + '</h4>'+
   '<div id="rating">Rating: ' +
-  '<span id="rating-content" style="color: #'+loc.ratingColor + '">'+
-  loc.rating + '</span>' +
+  '<span id="rating-content" style="color: #'+loc.venue.ratingColor + '">'+
+  loc.venue.rating + '</span>' +
   '</div>' +
-  '<div id="bodyContent">'+
+  '<div id="body-content">'+
   '<div id="address">Address: '+
-  '<span id="address-content">' +loc.location.formattedAddress + '</span>'+
+  '<span id="address-content">' +loc.venue.location.formattedAddress + '</span>'+
   '</div>'+
   '<div id="phone">Phone: '+
-  '<span id="phone-content">' +loc.contact.formattedPhone + '</span>'+
+  '<span id="phone-content">' +loc.venue.contact.formattedPhone + '</span>'+
   '</div>'+
   '</div>'+
   '</div>';
 
-  infoWindow = new google.maps.InfoWindow({
-    content: contentString
-  });
-  infoWindows.push(infoWindow);
+  return contentString;
 }
 
 

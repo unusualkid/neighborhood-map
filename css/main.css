@@ -1,5 +1,4 @@
-html,
-body {
+body,html {
     font-family: Arial, sans-serif;
     height: 100%;
     margin: 0;
@@ -10,10 +9,10 @@ h3 {
     margin: 5px 0;
 }
 
-#query {
-    margin: 5px 0;
-}
-
 #map {
     height: 100%;
+}
+
+#site-img {
+    width: 100px !important;
 }
