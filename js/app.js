@@ -6,8 +6,8 @@ var CLIENT_SECRET = "4V25QGAAULY2DN2CH4KYQELGQ1PXXMNZBOZIQG0FKETPJL1B";
 var KEY = "AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA";
 
 var vm = new viewModel();
-var markers = [], locs = [], infoWindows = [];
-var  loc;
+var markers = [], infowindows = [];
+var loc;
 
 // Google Map variables
 var map;
@@ -22,8 +22,14 @@ var markerBounds;
 function viewModel (){
   var self = this;
   self.city = ko.observable("Tokyo");
-  self.broth = ko.observable("Tonkotsu");
-  self.locs = ko.observableArray([]);
+  self.broth = ko.observable("Shio");
+  self.locs = ko.observableArray();
+
+  // Debug console.log
+  self.debug = ko.computed(function() {
+    console.log("self.locs: ");
+    console.log(self.locs());
+  });
 
   // Foursquare API parameter
   self.query = ko.computed(function() {
@@ -46,15 +52,16 @@ function viewModel (){
       'client_id': CLIENT_ID,
       'client_secret': CLIENT_SECRET,
       'v': getTodaysDate(),
-      'limit': 10,
-      'near': self.city,
+      'limit': 20,
+      'near': self.city(),
       'query': self.query()
     });
   });
-  console.log(self.fsExploreUrl());
+
   self.initData = ko.computed(function() {
-    initData(self.fsExploreUrl());
-  })
+    self.locs = ko.observableArray(initData(self.fsExploreUrl(), self.locs()));
+    console.log(self.locs());
+  });
 
   self.modifyMap = ko.computed(function() {
     modifyMap(self.geocodeUrl());
@@ -66,7 +73,8 @@ ko.applyBindings(vm);
 
 
 // Populate data with Foursquare database
-function initData(url) {
+function initData(url, locs) {
+  console.log(vm);
 
   clearMarkers(markers);
   loc = null;
@@ -88,15 +96,14 @@ function initData(url) {
       // Dynamic zoom to show all the markers
       markerBounds.extend(latLng);
       map.fitBounds(markerBounds);
-
-      // setInfowindow(loc);
-
     }
-    // addListenerToMarker();
+
     // Call function with a timeout so markers drop one after another
     for(i=0;i<locs.length;i++){
       window.setTimeout(setMarkers(locs[i]),i*200);
     }
+    return locs;
+    console.log(self.locs);
   }).fail(function(){
     console.log('Foursquare API Could Not Be Loaded.');
   });
@@ -122,26 +129,10 @@ function initMap() {
     },
     scaleControl: true
   });
-  // function placeMarker(lat,lng) {
-  //   // var latLng = new google.maps.LatLng( loc[1], loc[2]);
-  //   var marker = new google.maps.Marker({
-  //     position : position,
-  //     map      : map
-  //   });
-  //   google.maps.event.addListener(marker, 'click', function(){
-  //       infowindow.close(); // Close previously opened infowindow
-  //       infowindow.setContent( "<div id='infowindow'>"+ loc[0] +"</div>");
-  //       infowindow.open(map, marker);
-  //     });
-  //   for(var i=0; i<locs.length; i++) {
-  //     placeMarker(locs[i].location.lat,locs[i].location.lng);
-  //     console.log(locs[i].location.lat);
-  //   }
-  // }
 }
 
 function setMarkers(loc){
-  console.log(loc);
+
   var latLng = new google.maps.LatLng(loc.venue.location.lat, loc.venue.location.lng);
   var content = createContent(loc);
   var infowindow = new google.maps.InfoWindow();
@@ -152,22 +143,18 @@ function setMarkers(loc){
     animation: google.maps.Animation.DROP
   });
 
-    // marker.addListener('click', function(){
-    //     infowindow.open(map, marker);
-    // });
-    console.log("marker.position");
-    console.log(marker.position);
+  google.maps.event.addListener(marker, 'click', function(content){
+    return function(){
+      infowindow.close();
+      console.log(marker.position);
+      toggleBounce(marker);
+      infowindow.setContent(content);
+      infowindow.open(map, this);
+    }
+  }(content));
 
-    google.maps.event.addListener(marker, 'click', function(content){
-      return function(){
-        console.log(marker.position);
-        toggleBounce(marker);
-        infowindow.setContent(content);
-        infowindow.open(map, this);
-      }
-    }(content));
-
-  }
+  infowindows.push(infowindow);
+}
 // function setMarkers(locs){
 //   for(var i = 0; i < locs.length; i++){
 //     var latLng = new google.maps.LatLng(locs[i].venue.location.lat, locs[i].venue.location.lng);
@@ -272,17 +259,6 @@ function clearMarkers(markers) {
     markers = [];
   }
 }
-
-
-// function addListener(marker) {
-//   console.log("addListener.marker");
-//   console.log(marker.position);
-//   marker.addListener('click', function() {
-//     console.log('marker.addListener("click", function()');
-//     console.log(marker.position.lat());
-//     infoWindows.open(map, marker);
-//   })
-// }
 
 
 function addListenerToMarker() {

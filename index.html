@@ -5,37 +5,105 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="author" content="Kenneth Chen">
   <title>Ramen Finder</title>
-  <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
-  <link rel="stylesheet" type="text/css" href="css/main.css">
+  <link href="https://fonts.googleapis.com/css?family=Fjalla+One" rel="stylesheet">
+  <link href="http://weloveiconfonts.com/api/?family=zocial" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="css-src/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="css-src/main.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js'></script>
 
 </head>
+
 <body>
-  <h3 id="header">Ramen Finder</h3>
+  <header class="container-fluid">
+    <div class="row" id="header-row">
+      <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6" id="header-1"><img class="logo" src="img-src/ramen-logo.png"></div>
+      <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6 text-right" id="header-2">
+        <h1 class="text-uppercase main-title">Ramen Finder</h1>
+        <h3 class="subtitle">by Kenneth Chen</h3>
+      </div>
+    </div>
+  </header>
 
-  <p>City: <span data-bind= "text: city"></span></p>
-  <p>Broth: <span data-bind= "text: broth"></span></p>
-  <p>fsExploreUrl: <span data-bind= "text: fsExploreUrl"></span></p>
-  <p>geocodeUrl: <span data-bind= "text: geocodeUrl"></span></p>
-  <p>center.lat: <span data-bind= "text: center.lat"></span></p>
-  <p>center.lng: <span data-bind= "text: center.lng"></span></p>
-  <label for="city-input">City: </label>
-  <input id="city-input" name="city" data-bind="value: city">
-  <label for="broth-input">Broth: </label>
-  <select id="broth-input" name="broth" data-bind="value: broth">
-    <option>Tonkotsu</option>
-    <option>Shio</option>
-    <option>Shoyu</option>
-    <option>Miso</option>
-    <option>Seafood</option>
-  </select>
+  <div class="container-fluid" id="filter-bar">
+    <div class="row">
+      <div class="col-sm-3">
+        <label class="text-uppercase" for="city-input">City: </label>
+        <input class="textarea" id="city-input" name="city" data-bind="value: city">
+      </div>
+      <div class="col-sm-3">
+        <label class="text-uppercase" for="broth-input">Broth: </label>
+        <select id="broth-input" name="broth" data-bind="value: broth">
+          <option>Tonkotsu</option>
+          <option>Shio</option>
+          <option>Shoyu</option>
+          <option>Miso</option>
+          <option>Seafood</option>
+        </select>
+      </div>
 
-  <div id="map"></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-3 col-sm-3" id="list">
+        <div class="row">
+          <div class="col-6 col-sm-6">
+            <p>
+              City: <span data-bind= "text: city"></span>
+            </p>
+          </div>
+          <div class="col-6 col-sm-6">
+            <p>
+              Broth: <span data-bind= "text: broth"></span>
+            </p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-12">
+            <p>geocodeUrl: <span data-bind= "text: geocodeUrl"></span></p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-sm-6">
+            <p>center.lat: <span data-bind= "text: center.lat"></span></p>
+          </div>
+          <div class="col-sm-6">
+            <p>center.lng: <span data-bind= "text: center.lng"></span></p>
+          </div>
+        </div>
+      </div>
+      <div class="col-9 col-sm-9">
+        <div id="map"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <ul data-bind="foreach: locs">
+    <li>
+      Location <span data-bind="text: $index"> </span>:
+      <span data-bind="text: name"> </span>
+    </li>
+  </ul>
+
+
+  <footer class="container-fluid">
+    <div class="row">
+      <div class="social-media col-md-12">
+        <a href="https://twitter.com/KennethwChen" class="zocial-twitter"></a>
+        <a href="#" class="zocial-facebook"></a>
+        <a href="https://www.linkedin.com/in/kennethwchen" class="zocial-linkedin"></a>
+        <a href="https://github.com/unusualkid" class="zocial-github"></a>
+        <a href="https://ramenvagabond.wordpress.com" class="zocial-wordpress"></a>
+      </div>
+    </div>
+  </footer>
+
   <script type="text/javascript" src="js/app.js"></script>
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA&v=3&callback=initMap">
-  </script>
-
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA&v=3&callback=initMap"></script>
 
 </body>
 </html>
