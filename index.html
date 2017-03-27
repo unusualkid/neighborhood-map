@@ -7,8 +7,8 @@
   <title>Ramen Finder</title>
   <link href="https://fonts.googleapis.com/css?family=Fjalla+One" rel="stylesheet">
   <link href="http://weloveiconfonts.com/api/?family=zocial" rel="stylesheet">
-  <link rel="stylesheet" type="text/css" href="css-src/bootstrap.min.css">
-  <link rel="stylesheet" type="text/css" href="css-src/main.css">
+  <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="css/main.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js'></script>
 
@@ -17,8 +17,8 @@
 <body>
   <header class="container-fluid">
     <div class="row" id="header-row">
-      <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6" id="header-1"><img class="logo" src="img-src/ramen-logo.png"></div>
-      <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6 text-right" id="header-2">
+      <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4" id="header-1"><img class="logo" src="img/ramen-logo.png"></div>
+      <div class="col-xs-8 col-sm-8 col-md-8 col-lg-8 text-right" id="header-2">
         <h1 class="text-uppercase main-title">Ramen Finder</h1>
         <h3 class="subtitle">by Kenneth Chen</h3>
       </div>
@@ -28,11 +28,11 @@
   <div class="container-fluid" id="filter-bar">
     <div class="row">
       <div class="col-sm-3">
-        <label class="text-uppercase" for="city-input">City: </label>
-        <input class="textarea" id="city-input" name="city" data-bind="value: city">
+        <label class="text-uppercase" for="city-input"><strong>City: </strong></label>
+        <input class="textarea" id="city-input" name="city" placeholder="eg. Tokyo" data-bind="value: city">
       </div>
       <div class="col-sm-3">
-        <label class="text-uppercase" for="broth-input">Broth: </label>
+        <label class="text-uppercase" for="broth-input"><strong>Broth: </strong></label>
         <select id="broth-input" name="broth" data-bind="value: broth">
           <option>Tonkotsu</option>
           <option>Shio</option>
@@ -41,69 +41,75 @@
           <option>Seafood</option>
         </select>
       </div>
-
-    </div>
-  </div>
-
-  <div class="container">
-    <div class="row">
-      <div class="col-3 col-sm-3" id="list">
-        <div class="row">
-          <div class="col-6 col-sm-6">
-            <p>
-              City: <span data-bind= "text: city"></span>
-            </p>
-          </div>
-          <div class="col-6 col-sm-6">
-            <p>
-              Broth: <span data-bind= "text: broth"></span>
-            </p>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-sm-12">
-            <p>geocodeUrl: <span data-bind= "text: geocodeUrl"></span></p>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-sm-6">
-            <p>center.lat: <span data-bind= "text: center.lat"></span></p>
-          </div>
-          <div class="col-sm-6">
-            <p>center.lng: <span data-bind= "text: center.lng"></span></p>
-          </div>
-        </div>
+      <div class="col-sm-5">
+        <label class="text-uppercase" for="restaurant-input"><strong>Restaurant: </strong></label>
+        <input class="textarea" id="restaurant-input" placeholder="Enter Restaurant Name" data-bind="textInput: filter">
       </div>
-      <div class="col-9 col-sm-9">
-        <div id="map"></div>
+      <div class="col-sm-1">
+        <button class="btn-primary">Search
+        </button>
       </div>
     </div>
   </div>
 
+  <div class ="container-fluid content">
+    <div class="container">
+      <div class="row">
+        <div class="col-3 col-sm-3" id="list">
 
-  <ul data-bind="foreach: locs">
-    <li>
-      Location <span data-bind="text: $index"> </span>:
-      <span data-bind="text: name"> </span>
-    </li>
-  </ul>
+          <div class="row">
+            <div class="col-sm-12">
+              <ol class="list" data-bind="foreach: filteredLocs">
 
-
-  <footer class="container-fluid">
-    <div class="row">
-      <div class="social-media col-md-12">
-        <a href="https://twitter.com/KennethwChen" class="zocial-twitter"></a>
-        <a href="#" class="zocial-facebook"></a>
-        <a href="https://www.linkedin.com/in/kennethwchen" class="zocial-linkedin"></a>
-        <a href="https://github.com/unusualkid" class="zocial-github"></a>
-        <a href="https://ramenvagabond.wordpress.com" class="zocial-wordpress"></a>
+                <li class="filter-element">
+                  <span data-bind="text: name, click: showInfoWindow"> </span>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="col-9 col-sm-9">
+          <div id="map"></div>
+        </div>
       </div>
     </div>
-  </footer>
+  </div>
 
-  <script type="text/javascript" src="js/app.js"></script>
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA&v=3&callback=initMap"></script>
+<div class="container" id="error">
+  <div class="row">
+    <div class="col" id="gmap-error" style="display:none">
+      <div class="alert alert-danger alert-dismissible" role="alert">
+      <strong id="gmap-error-content"></strong>
+      <!-- There has been an error with Google Maps API, please check your internet connection. -->
+        <button type="button" class="close text-right" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+    </div>
+
+    <div class="col" id="foursquare-error" style="display: hidden">
+      <div class="alert alert-danger alert-dismissible" role="alert">
+        <strong id="foursquare-error-content"></strong>
+        <button type="button" class="close text-right" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer class="container-fluid">
+  <div class="row">
+    <div class="social-media col-md-12">
+      <a href="https://twitter.com/KennethwChen" class="zocial-twitter text-primary"></a>
+      <a href="#" class="zocial-facebook text-primary"></a>
+      <a href="https://www.linkedin.com/in/kennethwchen" class="zocial-linkedin text-primary"></a>
+      <a href="https://github.com/unusualkid" class="zocial-github text-primary"></a>
+      <a href="https://ramenvagabond.wordpress.com" class="zocial-wordpress text-primary"></a>
+    </div>
+  </div>
+</footer>
+
+<script type="text/javascript" src="js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/app.js"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA&v=3&callback=initMap" onerror="gMapError()"></script>
 
 </body>
 </html>

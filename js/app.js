@@ -1,13 +1,4 @@
-// Foursquare API keys
-var CLIENT_ID = "ECAQTFZ5BBRCA2SUHXOG1CJDRF442M5N3MKZGC5KAI5GZYPW";
-var CLIENT_SECRET = "4V25QGAAULY2DN2CH4KYQELGQ1PXXMNZBOZIQG0FKETPJL1B";
-
-// Google API key
-var KEY = "AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA";
-
 var vm = new viewModel();
-var markers = [], infowindows = [];
-var loc;
 
 // Google Map variables
 var map;
@@ -15,100 +6,30 @@ var center = {
   lat: 35.689488,
   lng: 139.691706
 };
-var markerBounds;
 
 
-/* ======= ViewModel ======= */
-function viewModel (){
-  var self = this;
-  self.city = ko.observable("Tokyo");
-  self.broth = ko.observable("Shio");
-  self.locs = ko.observableArray();
+// Create the Google Map geocode API dynacically based on user's input of city
+var geocodeUrl = ko.computed(function() {
+  return "https://maps.googleapis.com/maps/api/geocode/json?"
+  + $.param({
+    'key': "AIzaSyCNn3TmhHr2huAKuYWaKmvWEkv3qYyvkeA",
+    'address': vm.city()
+  })
+});
 
-  // Debug console.log
-  self.debug = ko.computed(function() {
-    console.log("self.locs: ");
-    console.log(self.locs());
-  });
-
-  // Foursquare API parameter
-  self.query = ko.computed(function() {
-    return 'Ramen' + " " + self.broth().toString();
-  });
-
-  // Create the Google Map geocode API dynacically based on user's input of city
-  self.geocodeUrl = ko.computed(function() {
-    return "https://maps.googleapis.com/maps/api/geocode/json?"
-    + $.param({
-      'key': KEY,
-      'address': self.city
-    })
-  });
 
   // Create Foursquare API to populate our data
-  self.fsExploreUrl = ko.computed(function() {
+var fsUrl = ko.computed(function() {
     return "https://api.foursquare.com/v2/venues/explore?"
     + $.param({
-      'client_id': CLIENT_ID,
-      'client_secret': CLIENT_SECRET,
+      'client_id': "ECAQTFZ5BBRCA2SUHXOG1CJDRF442M5N3MKZGC5KAI5GZYPW",
+      'client_secret': "4V25QGAAULY2DN2CH4KYQELGQ1PXXMNZBOZIQG0FKETPJL1B",
       'v': getTodaysDate(),
-      'limit': 20,
-      'near': self.city(),
-      'query': self.query()
+      'limit': 15,
+      'near': vm.city(),
+      'query': vm.query()
     });
   });
-
-  self.initData = ko.computed(function() {
-    self.locs = ko.observableArray(initData(self.fsExploreUrl(), self.locs()));
-    console.log(self.locs());
-  });
-
-  self.modifyMap = ko.computed(function() {
-    modifyMap(self.geocodeUrl());
-  });
-
-};
-
-ko.applyBindings(vm);
-
-
-// Populate data with Foursquare database
-function initData(url, locs) {
-  console.log(vm);
-
-  clearMarkers(markers);
-  loc = null;
-  infoWindow = null;
-
-  $.getJSON(url, function(data) {
-
-    // For Google Map dynamic zoom later
-    markerBounds = new google.maps.LatLngBounds();
-
-    for (i = 0 ; i < data.response.groups[0].items.length; i++) {
-      loc = data.response.groups[0].items[i];
-      locs.push(loc);
-      // console.log(data.response.groups[0].items[i]);
-
-      // Declare latLng for Google Map boundary
-      var latLng = new google.maps.LatLng(loc.venue.location.lat, loc.venue.location.lng);
-
-      // Dynamic zoom to show all the markers
-      markerBounds.extend(latLng);
-      map.fitBounds(markerBounds);
-    }
-
-    // Call function with a timeout so markers drop one after another
-    for(i=0;i<locs.length;i++){
-      window.setTimeout(setMarkers(locs[i]),i*200);
-    }
-    return locs;
-    console.log(self.locs);
-  }).fail(function(){
-    console.log('Foursquare API Could Not Be Loaded.');
-  });
-
-}
 
 
 // Initialize Google Map
@@ -131,72 +52,128 @@ function initMap() {
   });
 }
 
-function setMarkers(loc){
 
-  var latLng = new google.maps.LatLng(loc.venue.location.lat, loc.venue.location.lng);
-  var content = createContent(loc);
-  var infowindow = new google.maps.InfoWindow();
+/* ======= ViewModel ======= */
+function viewModel (){
+  var self = this;
 
+  self.city = ko.observable("Tokyo");
+  self.broth = ko.observable("Shio");
+
+  // Foursquare API parameter
+  self.query = ko.computed(function() {
+    return 'Ramen' + " " + self.broth().toString();
+  });
+
+  self.filter = ko.observable("");
+  self.loc = ko.observable();
+
+
+  self.locs = ko.observableArray();
+  self.markers = [];
+
+
+  self.filteredLocs = ko.computed(function() {
+    if(self.filter() === '') {
+      for(var i = 0; i < self.locs().length; i++) {
+        self.locs()[i].marker.setVisible(true);
+      }
+      return self.locs(); //initial load when no genre filter is specified
+    } else {
+      return ko.utils.arrayFilter(self.locs(), function(loc) {
+        if (loc.name.toLowerCase().indexOf(self.filter()) !== -1) {
+            loc.marker.setVisible(true);
+            return loc;
+          }
+          loc.marker.setVisible(false);
+        });
+    }
+  });
+
+    showInfoWindow = function(clicked) {
+      place = self.locs().find(function(loc) {
+        if (loc.marker.title === clicked.name)
+          return loc.marker;
+        });
+      if (place !== undefined) {
+        google.maps.event.trigger(place.marker, 'click');
+      }
+    };
+
+};
+
+ko.applyBindings(vm);
+
+
+/* ======= Model ======= */
+// Populate data with Foursquare database
+var initData = ko.computed(function() {
+  clearMarkers();
+  vm.locs.removeAll();
+
+  $.getJSON(fsUrl(), function(data) {
+    // For Google Map dynamic zoom later
+    var markerBounds = new google.maps.LatLngBounds();
+    vm.infoWindow = new google.maps.InfoWindow();
+    vm.currentMarker = null;
+
+    for (i = 0 ; i < data.response.groups[0].items.length; i++) {
+      vm.loc = data.response.groups[0].items[i].venue;
+
+      // Declare latLng for Google Map boundary
+      var latLng = new google.maps.LatLng(vm.loc.location.lat, vm.loc.location.lng);
+
+      setMarker(vm.loc, latLng);
+
+      // Dynamic zoom to show all the markers
+      markerBounds.extend(latLng);
+      map.fitBounds(markerBounds);
+
+      vm.locs.push(vm.loc);
+    }
+
+  }).fail(function(){
+    console.log('Foursquare API Could Not Be Loaded.');
+    foursquareError();
+  });
+});
+
+
+/* ======= Utility Functions ======= */
+// Clear all Google Map markers when data is repopulated by Foursquare call
+function clearMarkers() {
+  for (var i = vm.markers.length - 1; i >= 0 ; i--) {
+    vm.markers[i].setMap(null);
+    vm.markers.splice(i, 1);
+  }
+}
+
+
+// Set markers to show on map
+function setMarker(loc, latLng) {
   var marker = new google.maps.Marker({
     position: latLng,
     map: map,
+    title: loc.name,
     animation: google.maps.Animation.DROP
   });
 
+  var content = createContent(loc);
+
   google.maps.event.addListener(marker, 'click', function(content){
     return function(){
-      infowindow.close();
-      console.log(marker.position);
+      vm.infoWindow.close();
+
       toggleBounce(marker);
-      infowindow.setContent(content);
-      infowindow.open(map, this);
+      vm.infoWindow.setContent(content);
+      vm.infoWindow.open(map, this);
     }
   }(content));
 
-  infowindows.push(infowindow);
+  loc.marker = marker;
+  vm.markers.push(marker);
 }
-// function setMarkers(locs){
-//   for(var i = 0; i < locs.length; i++){
-//     var latLng = new google.maps.LatLng(locs[i].venue.location.lat, locs[i].venue.location.lng);
-//     var content = createContent(locs[i]);
-//     var infowindow = new google.maps.InfoWindow();
 
-//     var marker = new google.maps.Marker({
-//       position: latLng,
-//       map: map,
-//       animation: google.maps.Animation.DROP
-//     });
-
-//     // marker.addListener('click', function(){
-//     //     infowindow.open(map, marker);
-//     // });
-//     console.log("marker.position");
-//     console.log(marker.position);
-
-//     google.maps.event.addListener(marker, 'click', function(content){
-//       return function(){
-//         console.log(marker.position);
-//         toggleBounce(marker);
-//         infowindow.setContent(content);
-//         infowindow.open(map, this);
-//       }
-//     }(content));
-//   }
-// }
-
-// function setMarkers(position, timeout) {
-  // window.setTimeout(function() {
-  //   marker = new google.maps.Marker({
-  //     position: position,
-  //     map: map,
-  //     animation: google.maps.Animation.DROP
-  //   });
-  //   console.log("addMarkerWithTimeout.marker: "+marker.position);
-  //   // addListener(marker);
-  //   // addListener();
-  //   markers.push(marker);
-  // }, timeout);
-// }
 
 // Return today's date in "YYYYMMDD" format
 function getTodaysDate() {
@@ -212,37 +189,21 @@ function getTodaysDate() {
 }
 
 
-function modifyMap(url) {
-  $.getJSON(url, function(data) {
-    center = {
-      lat: data.results[0].geometry.location.lat,
-      lng: data.results[0].geometry.location.lng
-    };
-
-      // Modify the Google Map center
-      map.setCenter(center);
-    })
-  .fail(function(){
-    console.log('Google Map API Could Not Be Loaded.');
-  });
-}
-
-
+// Create content in the infowindow
 function createContent(loc) {
 
-  var contentString ='<div id="content">'+
-  '<img id="site-img" class="img-thumbnail img-responsive pull-right" src="'+ loc.tips[0].photourl +'" alt="pic">'+
-  '<h4 id="first-heading" class="first-heading">'+ loc.venue.name + '</h4>'+
+  var contentString ='<div id="infoWindow-content">'+
+  '<h4 id="first-heading" class="first-heading">'+ loc.name + '</h4>'+
   '<div id="rating">Rating: ' +
-  '<span id="rating-content" style="color: #'+loc.venue.ratingColor + '">'+
-  loc.venue.rating + '</span>' +
+  '<span id="rating-content" style="color: #'+loc.ratingColor + '">'+
+  loc.rating + '</span>' +
   '</div>' +
   '<div id="body-content">'+
   '<div id="address">Address: '+
-  '<span id="address-content">' +loc.venue.location.formattedAddress + '</span>'+
+  '<span id="address-content">' +loc.location.formattedAddress + '</span>'+
   '</div>'+
   '<div id="phone">Phone: '+
-  '<span id="phone-content">' +loc.venue.contact.formattedPhone + '</span>'+
+  '<span id="phone-content">' +loc.contact.formattedPhone + '</span>'+
   '</div>'+
   '</div>'+
   '</div>';
@@ -251,37 +212,42 @@ function createContent(loc) {
 }
 
 
-function clearMarkers(markers) {
-  if (markers) {
-    for (var i = 0; i < markers.length; i++) {
-      markers[i].setMap(null);
-    }
-    markers = [];
-  }
-}
-
-
-function addListenerToMarker() {
-  console.log("addListenerToMarker.markers.length: "+markers.length);
-  for(var i; i < markers.length ; i++){
-    console.log("markers[i]: "+ markers[i].position);
-    console.log("infoWindows[i]: "+infoWindows[i]);
-    markers[i].addListener('click', function(){
-      infoWindows[i].open(map, markers[i]);
-      console.log("addListenerToMarker marker: "+ markers[i].position);
-      toggleBounce(markers[i]);
-    });
-  }
-
-}
-
-
+// Animate Google Map marker
 function toggleBounce(marker) {
-  console.log("toggleBounce location: "+ loc.name);
-  console.log("toggleBounce marker: "+ marker.position);
+  // Stop the marker from bouncing if another is clicked
+  if (vm.currentMarker)
+    vm.currentMarker.setAnimation(null);
+
+  vm.currentMarker = marker;
+
+  // Stop the marker from bouncing if clicked twice and vice versa
   if (marker.getAnimation() !== null) {
     marker.setAnimation(null);
   } else {
     marker.setAnimation(google.maps.Animation.BOUNCE);
   }
 }
+
+
+function gMapError(){
+    $('.content').hide();
+    $('#gmap-error-content').text("There has been an error with Google Maps API, please check your internet connection.");
+    $('#gmap-error').show();
+
+}
+
+
+function foursquareError(){
+  console.log("foursquare-error");
+    $('.content').hide();
+    $('#foursquare-error-content').text("There has been an error with Foursquare API, please check your internet connection.");
+    $('#foursquare-error').show();
+}
+
+
+/* ======= Debugging ======= */
+// Debug console.log
+var debug = ko.computed(function() {
+  // console.log(geocodeUrl());
+  // console.log(vm.fsUrl());
+});

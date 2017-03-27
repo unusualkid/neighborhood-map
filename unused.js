@@ -1,21 +1,14 @@
-var map;
+function modifyMap(url) {
+  $.getJSON(url, function(data) {
+    center = {
+      lat: data.results[0].geometry.location.lat,
+      lng: data.results[0].geometry.location.lng
+    };
 
-function initMap(city) {
-
-    var infowindow = new google.maps.InfoWindow({
-      content: 'Do you ever feel like an InfoWindow?'
-    });
-    marker.addListener('click', function(){
-      infowindow.open(map, marker);
-      toggleBounce(marker=marker);
+      // Modify the Google Map center
+      map.setCenter(center);
     })
-  }
-
-
-
-      // console.log("marker: "+ marker.position);
-    marker.addListener('click', function(){
-      // infowindow.open(map, marker);
-      console.log("marker: "+ marker.position);
-      toggleBounce(marker);
-    })
+  .fail(function(){
+    console.log('Google Map API Could Not Be Loaded.');
+  });
+}

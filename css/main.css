@@ -1,0 +1,103 @@
+.logo {
+    height: 40px;
+}
+
+.main-title {
+    font-size: 1.5em;
+    margin: 2px;
+}
+.subtitle {
+    font-size:1em;
+    margin: 2px;
+}
+
+body,html {
+    font-family: Arial, sans-serif;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+        background-color: #23282d;
+}
+
+h3 {
+    margin: 5px 0;
+}
+
+#filter-bar {
+    background-color: #ed1c40;
+    color:#ffffff;
+    padding: 10px;
+}
+
+#map {
+
+  height: 500px;/*!!!!need to alter this to be responsive!!!!*/
+  border: 2px solid #fff;
+}
+
+#site-img {
+    width: 100px !important;
+}
+
+#broth-input {
+    height: 26px;
+    color: #000;
+    background-color: #fff;
+}
+
+header {
+    background-color: #23282d;
+    color: #dfe0dd;
+}
+
+footer {
+    background-color: #23282d;
+}
+
+p {
+    border-bottom: 1px dotted #E0E0E0;
+    font-style: italic;
+}
+
+.social-media {
+    text-align: right;
+    margin: 10px;
+}
+
+.social-media a {
+    color: #cea4b7;
+    margin: 10px;
+}
+
+[class*="zocial-"]:before {
+  font-family: 'zocial', sans-serif;
+}
+
+#city-input {
+    width: 90px;
+    color: #000;
+}
+
+#restaurant-input {
+    width: 70%;
+    color: #000;
+}
+
+.content {
+    background-color: #fff;
+    color: #000;
+}
+
+input:placeholder-shown {
+  font-style: italic;
+}
+
+.filter-element:hover {
+    font-size: 15px;
+    transition: 0.2s;
+    text-decoration: underline;
+}
+
+#gmap-error, #foursquare-error {
+    display: none;
+}
